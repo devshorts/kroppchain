@@ -22,21 +22,19 @@ type ProofOfWork struct {
 	Nonce string
 }
 
-func RandomWork(metadata Metadata) ProofOfWork {
-	return ProofOfWork{Nonce: string(metadata)}
-}
-
 type BlockChain struct {
-	Miner func(Metadata) ProofOfWork
+	Miner Miner
 }
 
 func NewKroppChain() BlockChain {
-	return BlockChain{Miner: RandomWork}
+	return BlockChain{
+		Miner: NoOpMiner{},
+	}
 }
 
 func (b BlockChain) AddBlock(metadata Metadata, chain *Block) *Block {
 	next := Block{
-		Proof:    b.Miner(metadata),
+		Proof:    b.Miner.Mine(),
 		Metadata: metadata,
 		Previous: chain,
 	}
