@@ -42,3 +42,18 @@ func TestVerifyNotValid(t *testing.T) {
 
 	assert.Error(t, err)
 }
+
+func TestReconcileMultiChains(t *testing.T) {
+	chain := NewKroppChain()
+
+	root1 := chain.AddBlock(Metadata("root1"), nil)
+	root1 = chain.AddBlock(Metadata("next"), root1)
+
+	root2 := chain.AddBlock(Metadata("root1"), nil)
+	root2 = chain.AddBlock(Metadata("next"), root2)
+	root2 = chain.AddBlock(Metadata("next again"), root2)
+
+	resultingChain := Reconcile(root1, root2)
+
+	assert.Equal(t, root2, resultingChain)
+}
