@@ -1,0 +1,5 @@
+logtest
+*.iml
+*.idea
+scaffold_test_target
+debug
