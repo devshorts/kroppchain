@@ -1,4 +1,4 @@
-package kroppchain
+package chain
 
 import (
 	"math/rand"

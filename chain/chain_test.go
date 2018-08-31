@@ -1,4 +1,4 @@
-package kroppchain
+package chain
 
 import (
 	"github.com/stretchr/testify/assert"
