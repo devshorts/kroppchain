@@ -1,25 +1,29 @@
 package chain
 
 import (
-	"bytes"
-	"crypto/sha256"
-	"fmt"
 	"github.com/pkg/errors"
-	"io"
+	"time"
 )
 
 type Hash string
-type Metadata string
+type Nonce int64
 
-type Block struct {
-	Hash     Hash
-	Proof    ProofOfWork
-	Metadata Metadata
-	Previous *Block
+type Transaction struct {
+	From   string
+	To     string
+	Amount int
 }
 
-type ProofOfWork struct {
-	Nonce string
+func (t Transaction) String() string {
+	return ""
+}
+
+type Block struct {
+	Timestamp    time.Time
+	Hash         Hash
+	Transactions []Transaction
+	Nonce        Nonce
+	Previous     *Block
 }
 
 type BlockChain struct {
@@ -32,23 +36,46 @@ func NewKroppChain() BlockChain {
 	}
 }
 
-func (b BlockChain) AddBlock(metadata Metadata, chain *Block) *Block {
+func rewardForMining(identity string) Transaction {
+	return Transaction{
+		To:     identity,
+		Amount: 50,
+	}
+}
+
+func (b BlockChain) NewBlock(transactions []Transaction, identity string) *Block {
+	return b.AddBlock(transactions, identity, nil)
+}
+
+func (b BlockChain) AddBlock(transactions []Transaction, identity string, chain *Block) *Block {
 	next := Block{
-		Proof:    b.Miner.Mine(),
-		Metadata: metadata,
-		Previous: chain,
+		Timestamp:    time.Now(),
+		Transactions: transactions,
+		Previous:     chain,
 	}
 
-	next.Hash = hash(&next)
+	next.Nonce = b.Miner.Mine(&next)
+
+	next.Transactions = append(next.Transactions, rewardForMining(identity))
+
+	next.Hash = Sha256(&next)
 
 	return &next
+}
+
+func (b BlockChain) Transfer(from string, to string, amount int) Transaction {
+	return Transaction{
+		From:   from,
+		To:     to,
+		Amount: amount,
+	}
 }
 
 func (b BlockChain) VerifyBlock(chain *Block) error {
 	curr := chain
 
 	for curr != nil {
-		if hash(curr) == curr.Hash {
+		if Sha256(curr) == curr.Hash {
 			curr = curr.Previous
 		} else {
 			return errors.New("chain hash invalid")
@@ -74,21 +101,4 @@ func LengthOf(chain *Block) int {
 	}
 
 	return length
-}
-
-func hash(block *Block) Hash {
-	s := sha256.New()
-
-	byteWriter := bytes.NewBuffer([]byte{})
-
-	byteWriter.WriteString(string(block.Proof.Nonce))
-	byteWriter.WriteString(string(block.Metadata))
-
-	if block.Previous != nil {
-		byteWriter.WriteString(string(block.Previous.Hash))
-	}
-
-	io.Copy(s, byteWriter)
-
-	return Hash(fmt.Sprintf("%x", s.Sum(nil)))
 }

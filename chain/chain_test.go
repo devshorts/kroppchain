@@ -5,12 +5,18 @@ import (
 	"testing"
 )
 
+const identity = "test"
+
+func FakeTransaction() []Transaction {
+	return []Transaction{{}}
+}
+
 func TestVerifyValid(t *testing.T) {
 	chain := NewKroppChain()
 
-	root := chain.AddBlock(Metadata("root"), nil)
+	root := chain.NewBlock(FakeTransaction(), identity)
 
-	root = chain.AddBlock(Metadata("next"), root)
+	root = chain.AddBlock(FakeTransaction(), identity, root)
 
 	err := chain.VerifyBlock(root)
 
@@ -20,9 +26,9 @@ func TestVerifyValid(t *testing.T) {
 func TestChainLength(t *testing.T) {
 	chain := NewKroppChain()
 
-	root := chain.AddBlock(Metadata("root"), nil)
+	root := chain.NewBlock(FakeTransaction(), identity)
 
-	root = chain.AddBlock(Metadata("next"), root)
+	root = chain.AddBlock(FakeTransaction(), identity, root)
 
 	chainLength := LengthOf(root)
 
@@ -32,9 +38,9 @@ func TestChainLength(t *testing.T) {
 func TestVerifyNotValid(t *testing.T) {
 	chain := NewKroppChain()
 
-	root := chain.AddBlock(Metadata("root"), nil)
+	root := chain.NewBlock(FakeTransaction(), identity)
 
-	root = chain.AddBlock(Metadata("next"), root)
+	root = chain.AddBlock(FakeTransaction(), identity, root)
 
 	root.Previous.Hash = Hash("0" + root.Previous.Hash)
 
@@ -46,12 +52,12 @@ func TestVerifyNotValid(t *testing.T) {
 func TestReconcileMultiChains(t *testing.T) {
 	chain := NewKroppChain()
 
-	root1 := chain.AddBlock(Metadata("root1"), nil)
-	root1 = chain.AddBlock(Metadata("next"), root1)
+	root1 := chain.NewBlock(FakeTransaction(), identity)
+	root1 = chain.AddBlock(FakeTransaction(), identity, root1)
 
-	root2 := chain.AddBlock(Metadata("root1"), nil)
-	root2 = chain.AddBlock(Metadata("next"), root2)
-	root2 = chain.AddBlock(Metadata("next again"), root2)
+	root2 := chain.NewBlock(FakeTransaction(), identity)
+	root2 = chain.AddBlock(FakeTransaction(), identity, root2)
+	root2 = chain.AddBlock(FakeTransaction(), identity, root2)
 
 	resultingChain := Reconcile(root1, root2)
 
